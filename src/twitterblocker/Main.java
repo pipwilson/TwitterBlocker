@@ -1,9 +1,16 @@
 package twitterblocker;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
@@ -18,6 +25,7 @@ import twitter4j.User;
 import twitter4j.internal.logging.Logger;
 import twitter4j.internal.org.json.JSONException;
 import twitter4j.internal.org.json.JSONObject;
+import twitter4j.internal.org.json.JSONTokener;
 
 /**
  * Twitter4j references:
@@ -27,17 +35,19 @@ import twitter4j.internal.org.json.JSONObject;
  */
 public class Main {
 
-    private final static String twitterID = "";
-    private final static String twitterPassword = "";
+    private static String twitterID = "";
+    private static String twitterPassword = "";
     private static List alreadyChecked;
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) throws TwitterException, IOException, InterruptedException, MalformedURLException, JSONException {
+    public static void main(String[] args) throws TwitterException, IOException, InterruptedException, MalformedURLException, JSONException, FileNotFoundException, URISyntaxException {
 
         System.getProperties().setProperty("twitter4j.restBaseURL", "http://api.supertweet.net/1/");
         System.getProperties().setProperty("twitter4j.debug", "true");
+
+        setCredentials();
 
         alreadyChecked = new ArrayList<String>();
 
@@ -59,10 +69,19 @@ public class Main {
                     // http://www.supertweet.net/about/api
                     System.out.println("Blocking: " + status.getUser().getName() + ": " + status.getUser().getLocation());
                     twitter.createBlock(status.getUser().getId());
+                    logBlock(status.getUser());
                     Thread.sleep(5000);
                 }
             }
         }
+    }
+
+    private static void setCredentials() throws FileNotFoundException, JSONException, URISyntaxException {
+        URL url = Main.class.getResource("./credentials.json");
+        JSONTokener tokener = new JSONTokener(new FileReader(new File(url.toURI())));
+        JSONObject credentialsJSON = new JSONObject(tokener);
+        twitterID = credentialsJSON.getString("twitterID");
+        twitterPassword = credentialsJSON.getString("twitterPassword");
     }
 
     /*
@@ -134,5 +153,15 @@ public class Main {
         }
 
         return false;
+    }
+
+    private static void logBlock(User user) {
+        try {
+            BufferedWriter out = new BufferedWriter(new FileWriter("blocklist.txt", true));
+            out.write(user.getName() +","+user.getScreenName()+","+user.getId());
+            out.newLine();
+            out.close();
+        } catch (IOException e) {
+        }
     }
 }
