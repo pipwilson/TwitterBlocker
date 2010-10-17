@@ -139,7 +139,4 @@ public class Main {
 
         return false;
     }
-    // podcasts: check size of main podcast folder = 23.5GB
-    // create new podcast-mobile folder?
-    // how to copy in? at will I suppose
 }
